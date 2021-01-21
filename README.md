@@ -1,16 +1,19 @@
 ### About
 
-`orgleaks` is a tool to run `gitleaks` for an organization. After version 7 of gitleaks the `--org` parameter was no longer supported. This small shell script helps you perform scans on an organization. 
+`orgleaks` is a tool to run `gitleaks` for an organization. After version 7 of gitleaks the `--org` parameter was no longer supported. This small shell script helps you perform scans on an organization as well as allows you to pass arguments to gitleaks. 
 
 Please note: This is not a full git scanning / secret scanner, to use this script you require [gitleaks](https://github.com/zricethezav/gitleaks) to be installed.
 
 ### Installation
 
-Make sure you have installed gitleaks ([instructions](https://github.com/zricethezav/gitleaks)), then:
+Make sure you have installed [gitleaks](https://github.com/zricethezav/gitleaks/releases), then:
 
 ```
-git clone https://github.com/thecybermafia/orgleaks
+git clone https://github.com/thecybermafia/orgleaks.git
 ```
+Please make sure you have updated your access token or placed an environment variable for the same inside the script, I would recommend you not to hardcode your access token. 
+
+If you are not aware about access tokens, refer to [this](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) documentation given by Github.
 
 ### Usage
 
