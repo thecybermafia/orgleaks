@@ -19,7 +19,7 @@
 
 # Revision history:
 # 2021-01-21 Initial commit
-# 2021-02-09 Support for pages
+# 2021-02-09 Ability to download from github pages and save report
 # ---------------------------------------------------------------------------
 
 PROGNAME="orgleaks.sh"
@@ -73,11 +73,15 @@ help_message() {
 
   Options:
   -h, --help  Display this help message and exit.
-  -o, --org, github  Organization Name
+  -o, --org github  Organization Name
       where 'github' is the Organization Name.
+  -s, --save-file orgleaks_report_github
+      where 'orgleaks_report_github' is the Report Name.
+  -f, --format csv
+      where 'csv' is the Report Format.
   -v  verbose
-  -a, --gitleaks-args, "--report=org-gitleaks-result --format=csv"
-      where '"--report=org-gitleaks-result --format=csv"' are the arguments for Gitleaks
+  -a, --gitleaks-args "--config-path=gitleaks.toml"
+      where '"--config-path=gitleaks.toml"' are the arguments for Gitleaks
       refer to https://github.com/zricethezav/gitleaks/wiki/Scanning
 
   Examples:
@@ -88,8 +92,11 @@ help_message() {
   orgleaks.sh -o github -v 
   Scans the 'github' organization and enables verbosity for gitleaks
 
-  orgleaks.sh -o github -v -a "--report=github-gitleaks-result.csv --format=csv"
-  Scans the 'github' organization, enables verbosity and save the report in csv format with provided name
+  orgleaks.sh -o github -v -a "--config-path=gitleaks.toml"
+  Scans the 'github' organization, enables verbosity and uses a configuration file
+
+  orgleaks.sh -o github -v -a "--config-path=gitleaks.toml" --save-file orgleaks_report_github --format csv
+  Scans the 'github' organization, enables verbosity, uses a configuration file and saves the report in csv format with provided name
 
 _EOF_
   return
@@ -98,8 +105,6 @@ _EOF_
 # Trap signals
 trap "signal_exit TERM" TERM HUP
 trap "signal_exit INT"  INT
-
-
 
 # Parse command-line
 while [[ -n $1 ]]; do
@@ -112,6 +117,10 @@ while [[ -n $1 ]]; do
       args="${args} --verbose";;
     -a | --gitleaks-args)
       shift; args="${args} $1" ;;
+    -s | --save-file)
+      shift; fileName="$1" ;;
+    -f | --format)
+      shift; format="$1" ;;
     -* | --*)
       usage
       error_exit "Unknown option $1" ;;
@@ -124,29 +133,65 @@ done
 # Add your github access token here, it is recommended to put an environment variable
 access_token="youraccesstokengoeshere"
 
-
 if [ "$org" == "" ]; then
   echo -e "ERROR: Organization name cannot be empty!"
   help_message; graceful_exit ;
 else 
+  dateTime=$(date '+%d-%m-%Y_%H:%M:%S')
+  mkdir -p ./reports/"$org"/"$dateTime"
   pages=$(curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' -sI https://api.github.com/orgs/$org/repos\?per_page\=500  | grep "Link: <https://api.github.com" | awk '{print $4}' | grep -E -o '&page=\d+>;' | grep -E -o '[0-9]+')
   if [ -z "$pages" ]
   then
-      curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' -s https://api.github.com/orgs/$org/repos\?per_page\=500 | grep "full_name" | awk -v org="$org" -F"\"" '{print "https://github.com/"$4}' > $org-repos.txt
+      curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' -s https://api.github.com/orgs/$org/repos\?per_page\=500 | grep "full_name" | awk -v org="$org" -F"\"" '{print "https://github.com/"$4}' > ./reports/"$org"/"$dateTime"/$org-repos.txt
   else
-      > $org-repos.txt
+      > ./reports/"$org"/"$dateTime"/$org-repos.txt
       for (( counter=1; counter<=$pages; counter++ ))
       do  
-        curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' -s https://api.github.com/orgs/$org/repos\?per_page\=500\&page\=$counter | grep "full_name" | awk -v org="$org" -F"\"" '{print "https://github.com/"$4}' >> $org-repos.txt
+        curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' -s https://api.github.com/orgs/$org/repos\?per_page\=500\&page\=$counter | grep "full_name" | awk -v org="$org" -F"\"" '{print "https://github.com/"$4}' >> ./reports/"$org"/"$dateTime"/$org-repos.txt
       done
   fi
   if [ "$args" == "" ]; then
-    while read -r line; do gitleaks --repo-url="$line" --access-token=$access_token; done < $org-repos.txt
+    if [ -z "$fileName" ]
+    then
+      while read -r line 
+      do 
+      gitleaks --repo-url="$line" --access-token=$access_token
+      done < ./reports/"$org"/"$dateTime"/$org-repos.txt
+    else  
+      
+      if [ -z "$format" ]
+      then
+          format="json"
+      fi
+      while read -r line
+      do 
+        localReport=$(echo "$line" | awk -F '/' '{print $5}')
+        localPath=./reports/"$org"/"$dateTime"/"$localReport"."$format"
+        gitleaks --repo-url="$line" --report=$localPath --format="$format" --access-token=$access_token 
+      done < ./reports/"$org"/"$dateTime"/$org-repos.txt
+      cat ./reports/"$org"/"$dateTime"/* > ./reports/"$org"/"$dateTime"/"$fileName"."$format"
+    fi
   else 
-    while read -r line; do gitleaks --repo-url="$line" --access-token=$access_token $args; done < $org-repos.txt
+    if [ -z "$fileName" ]
+    then
+      while read -r line
+        do gitleaks --repo-url="$line" --access-token=$access_token $args
+      done < ./reports/"$org"/"$dateTime"/$org-repos.txt
+    else
+      if [ -z "$format" ]
+      then
+          format="json"
+      fi
+      while read -r line 
+      do 
+        localReport=$(echo "$line" | awk -F '/' '{print $5}')
+        localPath=./reports/"$org"/"$dateTime"/"$localReport"."$format"
+        gitleaks --repo-url="$line" --report=$localPath --format="$format" --access-token=$access_token $args
+      done < ./reports/"$org"/"$dateTime"/$org-repos.txt
+      cat ./reports/"$org"/"$dateTime"/* > ./reports/"$org"/"$dateTime"/"$fileName"."$format"
+    fi
   fi
 fi
 
 
 graceful_exit
-
