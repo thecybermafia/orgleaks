@@ -19,6 +19,7 @@
 
 # Revision history:
 # 2021-01-21 Initial commit
+# 2021-02-09 Support for pages
 # ---------------------------------------------------------------------------
 
 PROGNAME="orgleaks.sh"
@@ -120,7 +121,7 @@ while [[ -n $1 ]]; do
   shift
 done
 
-# Add your github access token here
+# Add your github access token here, it is recommended to put an environment variable
 access_token="youraccesstokengoeshere"
 
 
@@ -128,12 +129,21 @@ if [ "$org" == "" ]; then
   echo -e "ERROR: Organization name cannot be empty!"
   help_message; graceful_exit ;
 else 
+  pages=$(curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' -sI https://api.github.com/orgs/$org/repos\?per_page\=500  | grep "Link: <https://api.github.com" | awk '{print $4}' | grep -E -o '&page=\d+>;' | grep -E -o '[0-9]+')
+  if [ -z "$pages" ]
+  then
+      curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' -s https://api.github.com/orgs/$org/repos\?per_page\=500 | grep "full_name" | awk -v org="$org" -F"\"" '{print "https://github.com/"$4}' > $org-repos.txt
+  else
+      > $org-repos.txt
+      for (( counter=1; counter<=$pages; counter++ ))
+      do  
+        curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' -s https://api.github.com/orgs/$org/repos\?per_page\=500\&page\=$counter | grep "full_name" | awk -v org="$org" -F"\"" '{print "https://github.com/"$4}' >> $org-repos.txt
+      done
+  fi
   if [ "$args" == "" ]; then
-    curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' https://api.github.com/orgs/$org/repos | grep "full_name" | awk -v org="$org" -F"\"" '{print "https://github.com/"$4}' > $org-repos.txt
-    while read in; do gitleaks --repo-url="$in" --access-token=$access_token; done < $org-repos.txt
+    while read -r line; do gitleaks --repo-url="$line" --access-token=$access_token; done < $org-repos.txt
   else 
-    curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' https://api.github.com/orgs/$org/repos | grep "full_name" | awk -v org="$org" -F"\"" '{print "https://github.com/"$4}' > $org-repos.txt
-    while read in; do gitleaks --repo-url="$in" --access-token=$access_token $args; done < $org-repos.txt
+    while read -r line; do gitleaks --repo-url="$line" --access-token=$access_token $args; done < $org-repos.txt
   fi
 fi
 
