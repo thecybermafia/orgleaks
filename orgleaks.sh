@@ -167,9 +167,9 @@ else
       do 
         localReport=$(echo "$line" | awk -F '/' '{print $5}')
         localPath=./reports/"$org"/"$dateTime"/"$localReport"."$format"
-        gitleaks --repo-url="$line" --report=$localPath --format="$format" --access-token=$access_token 
+        gitleaks --repo-url="$line" --report="$localPath" --format="$format" --access-token=$access_token 
       done < ./reports/"$org"/"$dateTime"/$org-repos.txt
-      cat ./reports/"$org"/"$dateTime"/* > ./reports/"$org"/"$dateTime"/"$fileName"."$format"
+      cat ./reports/"$org"/"$dateTime"/*."$format" > ./reports/"$org"/"$dateTime"/"$fileName"."$format"
     fi
   else 
     if [ -z "$fileName" ]
@@ -186,9 +186,9 @@ else
       do 
         localReport=$(echo "$line" | awk -F '/' '{print $5}')
         localPath=./reports/"$org"/"$dateTime"/"$localReport"."$format"
-        gitleaks --repo-url="$line" --report=$localPath --format="$format" --access-token=$access_token $args
+        gitleaks --repo-url="$line" --report="$localPath" --format="$format" --access-token=$access_token $args
       done < ./reports/"$org"/"$dateTime"/$org-repos.txt
-      cat ./reports/"$org"/"$dateTime"/* > ./reports/"$org"/"$dateTime"/"$fileName"."$format"
+      cat ./reports/"$org"/"$dateTime"/*."$format" > ./reports/"$org"/"$dateTime"/"$fileName"."$format"
     fi
   fi
 fi
