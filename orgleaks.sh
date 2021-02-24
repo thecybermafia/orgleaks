@@ -139,7 +139,7 @@ if [ "$org" == "" ]; then
 else 
   dateTime=$(date '+%d-%m-%Y_%H:%M:%S')
   mkdir -p ./reports/"$org"/"$dateTime"
-  pages=$(curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' -sI https://api.github.com/orgs/$org/repos\?per_page\=500  | grep "Link: <https://api.github.com" | awk '{print $4}' | grep -E -o '&page=\d+>;' | grep -E -o '[0-9]+')
+  pages=$(curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' -sI https://api.github.com/orgs/$org/repos\?per_page\=500  | grep "<https://api.github.com" | awk '{print $4}'| awk -F "=" '{print $3}' | sed 's/[^0-9]//g')
   if [ -z "$pages" ]
   then
       curl -H 'Authorization: token '"$access_token" -H 'Accept:application/vnd.github.VERSION.raw' -s https://api.github.com/orgs/$org/repos\?per_page\=500 | grep "full_name" | awk -v org="$org" -F"\"" '{print "https://github.com/"$4}' > ./reports/"$org"/"$dateTime"/$org-repos.txt
