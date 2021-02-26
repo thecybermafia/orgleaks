@@ -70,10 +70,10 @@
 	tags = ["key","code", "AsymmetricPrivateKey"]
 
 [[rules]]
-  description = "Asymmetric Private Key File"
-  regex = '''-----BEGIN ((EC|PGP|DSA|RSA|OPENSSH) )?PRIVATE KEY( BLOCK)?-----'''
-  tags = ["key","file", "AsymmetricPrivateKey"]
-  file = '''(.*?)(pem|pkcs12|p12|pfx|pri|key|bin)$'''
+	description = "Asymmetric Private Key File"
+	regex = '''-----BEGIN ((EC|PGP|DSA|RSA|OPENSSH) )?PRIVATE KEY( BLOCK)?-----'''
+	tags = ["key","file", "AsymmetricPrivateKey"]
+	file = '''(.*?)(pem|pkcs12|p12|pfx|pri|key|bin)$'''
 
 [[rules]]
 	description = "Google API key"
@@ -86,10 +86,10 @@
 	tags = ["key","token", "Google"]
 	
 [[rules]]
-  description = "Google OAuth key"
-  regex = '''googleusercontent\.com.*client_secret.*'''
-  tags = ["key","oauth","file", "Google"]
-  file = '''json'''
+  	description = "Google OAuth key"
+	regex = '''googleusercontent\.com.*client_secret.*'''
+	tags = ["key","oauth","file", "Google"]
+	file = '''json'''
 
 [[rules]]
 	description = "Google OAuth key"
@@ -200,15 +200,14 @@
   tags = ["key","secret", "Python"]
   file = '''settings.py'''
   [rules.allowlist]
-        regexes = [
-				'''(SECRET_KEY)(.*test)|(.*example)''',
-				'''(SECRET_KEY).*{{(.*?)}}'''
-				]
-        	description = "Ignore example key and env variable key"
+        regexes = ['''(SECRET_KEY)(.*test)|(.*example)''',
+	'''(SECRET_KEY).*{{(.*?)}}'''
+	]
+	description = "Ignore example key and env variable key"
 
 [[rules]]
 	description = "Files with keys and credentials"
-  file = '''(?i)(id_rsa|passwd|id_rsa.pub|asc|ovpn|cscfg|rdp|mdf|sdf|sqlite|sqlite3|bek|tpm|jks|psafe3|agilekeychain|keychain|pgpass|shadow|ftpconfig|git-credentials|htpasswd|pgpass|s3cfg|remote-sync.json|filezilla.xml|idea14.key|logins.json|secrets.yml|server.cfg|sftp-config.json|sshd_config)$'''
+	file = '''(?i)(id_rsa|passwd|id_rsa.pub|asc|ovpn|cscfg|rdp|mdf|sdf|sqlite|sqlite3|bek|tpm|jks|psafe3|agilekeychain|keychain|pgpass|shadow|ftpconfig|git-credentials|htpasswd|pgpass|s3cfg|remote-sync.json|filezilla.xml|idea14.key|logins.json|secrets.yml|server.cfg|sftp-config.json|sshd_config)$'''
 
 [[rules]]
 	description = "Generic Secret"
