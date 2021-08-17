@@ -3,6 +3,7 @@
 # orgleaks.sh - To run gitleaks for an organization
 
 # Copyright 2021, Rajan Christian
+# Copyright 2021, Western Digital Corporation or its affiliates
   
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +21,13 @@
 # Revision history:
 # 2021-01-21 Initial commit
 # 2021-02-09 Ability to download from github pages and save report
+# 2021-08-17 Added error messaging around access token settings
 # ---------------------------------------------------------------------------
 
 PROGNAME="orgleaks.sh"
-VERSION="0.1"
+VERSION="0.3"
+# Add your github access token here, it is recommended to put an environment variable
+ACCESS_TOKEN="youraccesstokengoeshere"
 
 clean_up() { # Perform pre-exit housekeeping
   return
@@ -130,8 +134,17 @@ while [[ -n $1 ]]; do
   shift
 done
 
-# Add your github access token here, it is recommended to put an environment variable
-access_token="youraccesstokengoeshere"
+
+if [ -z "${access_token}" ]; then
+  access_token=$ACCESS_TOKEN
+else
+  access_token="${access_token}"
+fi
+
+if [[ "$access_token" == "" || "$access_token" == "youraccesstokengoeshere" ]]; then
+  echo -e "ERROR: Access token not set! Please set environment variable access_token or ACCESS_TOKEN in script."
+  help_message; graceful_exit ;
+fi
 
 if [ "$org" == "" ]; then
   echo -e "ERROR: Organization name cannot be empty!"
